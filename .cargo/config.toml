@@ -1,0 +1,4 @@
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld.exe"
+rustflags = ["-Clink-arg=-fuse-ld=lld","-Ctarget-cpu=native"] #,"--emit=asm"
+#"-Zshare-generics=n",

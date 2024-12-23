@@ -1,0 +1,8 @@
+imports_granularity = "Crate"
+reorder_imports = true
+group_imports = "StdExternalCrate"
+use_field_init_shorthand = true
+use_small_heuristics = "Max"
+max_width = 80
+style_edition = "2021"
+wrap_comments = true

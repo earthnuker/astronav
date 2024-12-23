@@ -1,0 +1,171 @@
+[package]
+name = "astronav"
+version = "0.2.0"
+authors = ["Daniel Seiller <earthnuker@gmail.com>"]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/earthnuker/astronav"
+include = ["src/**/*", "build.rs"]
+description = "Long-range route plotter for Elite: Dangerous"
+
+[lib]
+name = "pyastronav"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+
+[profile.release]
+opt-level = 3
+strip = "none"
+split-debuginfo = "packed"
+lto = "thin"
+# codegen-units = 1
+panic = "abort"
+debug = "full"
+
+# The profile that 'cargo dist' will build with
+[profile.dist]
+inherits = "release"
+
+[dependencies]
+pyo3 = { version = "0.22", features = [
+    "extension-module",
+    "eyre",
+    "abi3-py37"
+], optional = true }
+serde_json = "1.0"
+sha3 = "0.10"
+byteorder = "1.5"
+crossbeam-channel = "0.5"
+crossbeam-utils = "0.8"
+regex = "1.11"
+num_cpus = "1.16"
+thiserror = "2.0"
+pyo3-log = { version = "0.11", optional = true }
+flate2 = { version = "1.0", default-features = false, features = [
+    "rust_backend"
+] }
+pythonize = { version = "0.22", optional = true }
+itertools = "0.13"
+rustc-hash = "2.0"
+rand = { version = "0.8", features = ["small_rng", "min_const_gen", "nightly"] }
+memmap2 = "0.9"
+tracing = { version = "0.1", features = ["log"] }
+lazy_static = "1.5"
+human-repr = { version = "1.1", features = ["space"] }
+triple_accel = "0.4"
+rayon = "1.10"
+bitvec_simd = "0.20"
+once_cell = "1.20"
+hex = "0.4"
+nohash-hasher = "0.2"
+tracing-subscriber = { version = "0.3", optional = true, features = [
+    "fmt",
+    "local-time",
+    "env-filter",
+    "time"
+] }
+clap = { version = "4.5", features = ["derive", "string", "unicode"], optional = true }
+time = { version = "0.3", features = ["macros", "formatting"], optional = true }
+iced = { version = "0.13", optional = true, features = ["canvas"] }
+webbrowser = { version = "1.0", features = [
+    "hardened",
+    "disable-wsl"
+], optional = true }
+enum-iterator = { version = "2.1", optional = true }
+ureq = "2.10"
+ctrlc = { version = "3.4", features = ["termination"] }
+eframe = { version = "0.29", optional = true, default-features = false, features = [
+    "accesskit",
+    "default_fonts",
+    "wgpu",
+] }
+egui_tracing = { version = "0.2", optional = true }
+parse-display = "0.10"
+strum = { version = "0.26", features = ["derive"] }
+fs-err = "3.0"
+format_num = "0.1"
+num-format = { version = "0.4", features = ["with-system-locale"] }
+num-traits = "0.2"
+yansi = { version = "1.0.1", features = [
+    "detect-env",
+    "detect-tty",
+    "hyperlink"
+] }
+indoc = "2.0"
+oneshot = { version = "0.1", default-features = false, features = ["std"] }
+clap-markdown = { version = "0.1", optional = true }
+termimad = { version = "0.31", optional = true }
+colorous = "1.0"
+egui_file = { version = "0.19", optional = true }
+roaring = { version = "0.10", features = ["serde"] } # no simd until it's fixed
+binrw = "0.14"
+argfile = { version = "0.2", optional = true }
+toml = { version = "0.8", optional = true }
+egui_dock = { version = "0.14", optional = true }
+egui-phosphor = { version = "0.7", optional = true, features = ["fill"] }
+color-eyre = { version = "0.6", features = ["url"] }
+directories = "5.0.1"
+serde = { version = "1.0.215", features = ["derive"] }
+# rstar = {version="*",features = ["bulk_load_parallel"]} # vendored dependency
+# rstar = {git="https://github.com/georust/rstar.git",rev="c1b704d"}
+zstd = { version = "0.13", features = ["fat-lto"] }
+shadow-rs = "0.36.0"
+bincode = "1.3.3"
+eudex = "0.1.1"
+egui_plot = "0.29.0"
+fst = "0.4.7"
+mimalloc = "0.1.43"
+fnv = "1.0.7"
+wide = "0.7.30"
+criterion = { version = "0.5", features = ["real_blackbox"] }
+sif-kdtree = { version = "0.6.0", features = ["rayon"] }
+bytemuck = { version = "1.20.0", features = ["derive", "must_cast"] }
+dhat = "0.3.3"
+sorted-vec = "0.8.5"
+parking_lot = { version = "0.12.3", features = ["arc_lock", "nightly"] }
+fast-floats = "0.2.0"
+
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["real_blackbox"] }
+rand = "0.8"
+rand_distr = "0.4"
+
+
+[build-dependencies]
+pyo3-build-config = { version = "0.23", features = [
+    "extension-module",
+    "abi3-py37",
+    "resolve-config"
+], optional = true}
+shadow-rs = "0.36"
+
+# [patch.crates-io]
+# rstar = { path = "./vendor/rstar_git/rstar" }
+
+[features]
+default = ["bin"]
+bin = [
+    "dep:clap",
+    "dep:tracing-subscriber",
+    "dep:time",
+    "dep:clap-markdown",
+    "dep:termimad",
+    "dep:argfile",
+    "dep:toml",
+]
+pyo3 = ["dep:pyo3", "dep:pyo3-log", "dep:pythonize","dep:pyo3-build-config"]
+gui_iced = ["bin", "dep:iced", "dep:enum-iterator"]
+gui_eframe = [
+    "bin",
+    "dep:eframe",
+    "dep:egui_tracing",
+    "dep:enum-iterator",
+    "dep:egui_file"
+]
+edmc_plugin = ["pyo3"]
+
+[package.metadata.bundle]
+name = "AstroNav"
+identifier = "io.github.earthnuker.astronav"
