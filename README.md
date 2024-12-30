@@ -1,6 +1,6 @@
 # Astronav
 
-![Astronav](images/screenshot.png)
+[![asciicast](https://asciinema.org/a/qKKhN6AyMHfQr1VZNHpTUNQpk.svg)](https://asciinema.org/a/qKKhN6AyMHfQr1VZNHpTUNQpk)
 
 Long-range route-plotting tool for Elite Dangerous.
 
