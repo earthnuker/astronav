@@ -423,14 +423,14 @@ pub fn get_fsd_info(
 }
 
 #[derive(
-    Debug, Copy, Clone, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord,
+    Debug, Copy, Clone, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Hash,
 )]
 #[serde(untagged)]
 pub enum BeamWidth {
-    Absolute(usize),
-    Fraction(usize, NonZeroUsize),
     #[serde(deserialize_with = "bw_infinite")]
     Infinite,
+    Absolute(usize),
+    Fraction(usize, NonZeroUsize),
 }
 
 impl Default for BeamWidth {
@@ -719,7 +719,7 @@ impl SystemFlags {
         self.primary_kind().mult()
     }
 
-    pub fn mult(self) -> f32 {
+    pub const fn mult(self) -> f32 {
         self.primary_mult().max(self.kind().mult())
     }
 }
@@ -806,7 +806,7 @@ impl TreeNode {
         unsafe { &*(&raw const self.pos).cast::<[f32; 3]>() }
     }
 
-    pub fn mult(&self) -> f32 {
+    pub const fn mult(&self) -> f32 {
         self.flags.mult()
     }
 
@@ -814,7 +814,7 @@ impl TreeNode {
         self.flags.primary_mult()
     }
 
-    pub fn range(&self, range2: f32) -> f32 {
+    pub fn range2(&self, range2: f32) -> f32 {
         self.mult().powi(2) * range2
     }
 
