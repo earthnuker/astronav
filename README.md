@@ -22,7 +22,7 @@ Astronav is designed to be fast. It uses a beam-search algorithm to find the sho
 
 On average, when comparing a beam-search with a width of 1024 and a full breadth-first search, the beam-search is about 160-170x faster while returning routes within 20 jumps of the optimal route and a beam-width of 8192 is about 60x faster and returns results within 5-10 jumps of the optimal route.
 
-The following table shows average results from computing routes between random pairs of systems in the galaxy with different beam widths.
+The following table shows average results from computing around 100 routes between random pairs of systems in the galaxy with different beam widths.
 These computations were run utilizing 8 threads on a Ryzen 9 5950X clocked at 4 GHz with 32 GB of RAM and KD-Tree memory-mapped in from an NVMe SSD (WD_BLACK SN770).
 
 
