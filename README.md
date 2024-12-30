@@ -9,7 +9,7 @@ Long-range route-plotting tool for Elite Dangerous.
   - Custom heuristic for the beam-search algorithm that tries to minimize the number of jumps.
   - A-Star and Dijkstra algorithms for finding the most fuel efficient route between systems.
 - Memory-mapped, precomputed KD-Tree loads almost instantly and allows for fast nearest-neighbor searches and low memory usage.
-- Typo-resistant, high-performance, fuzzy system name search using Levenstein distance.
+- Typo-resistant, high-performance, fuzzy system name search using Levenshtein distance.
 - Fuel-consumption and refuel stops are taken into account when plotting routes.
 - User-friendly command-line interface with built-in help.
 - Pretty colors in output.
