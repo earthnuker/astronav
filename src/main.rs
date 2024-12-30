@@ -152,8 +152,8 @@ impl Job {
         if let Some(ship) = self.ship {
             router.set_ship(get_ship(&ship)?)
         }
-        let (dt, route) =
-            router.compute_route(&hops, self.range, 0.0, self.mode, self.mmap)?;
+        let (dt, route) = router
+            .compute_route(&hops, self.range, 0.0, self.mode, self.mmap)?;
         print_route(dt, &route, self.quiet);
         Ok(route)
     }
@@ -273,7 +273,7 @@ enum Command {
         deterministic: bool,
         /// Reduce memory usage by memory mapping the KD-Tree used for route
         /// computation
-        #[arg(long="mmap", short)]
+        #[arg(long = "mmap", short)]
         mmap_tree: bool,
         /// Reduce memory usage by only loading star system within a maximum
         /// distance from the straight line connecting route waypoints
@@ -475,9 +475,15 @@ fn print_route(dt: Duration, route: &[System], quiet: bool) {
         let tag = tag.paint(style);
         let name = hop.name.paint(style);
         if hop.flags.is_waypoint() {
-            println!("<{n}> {name} ({tag}) {dist}", dist = dist.human_count(" Ly"));
+            println!(
+                "<{n}> {name} ({tag}) {dist}",
+                dist = dist.human_count(" Ly")
+            );
         } else {
-            println!(" {n}  {name} ({tag}) {dist}",dist = dist.human_count(" Ly"));
+            println!(
+                " {n}  {name} ({tag}) {dist}",
+                dist = dist.human_count(" Ly")
+            );
         }
     }
 }
@@ -515,8 +521,7 @@ fn sif_kdtree_bench(
         0.0,
     )?;
     let t_start = Instant::now();
-    let tree: Arc<KdTree<_, _>> =
-        Arc::new(KdTree::par_new(data));
+    let tree: Arc<KdTree<_, _>> = Arc::new(KdTree::par_new(data));
     println!("Built in {}", t_start.elapsed().human_duration());
     let total = tree.len();
     let seed = Arc::new(AtomicU64::new(0));
@@ -563,8 +568,7 @@ fn sif_kdtree_serial_bench(
         0.0,
     )?;
     let t_start = Instant::now();
-    let tree: Arc<KdTree<_, _>> =
-        Arc::new(KdTree::new(data));
+    let tree: Arc<KdTree<_, _>> = Arc::new(KdTree::new(data));
     println!("Built in {}", t_start.elapsed().human_duration());
     let total = tree.len();
     let seed = Arc::new(AtomicU64::new(0));
@@ -601,10 +605,7 @@ mod bench {
     };
 
     use super::Result;
-    use crate::{
-        common::TreeNode,
-        route::{Router},
-    };
+    use crate::{common::TreeNode, route::Router};
 
     fn bench_tree(c: &mut Criterion) {
         rayon::ThreadPoolBuilder::new()
@@ -673,7 +674,7 @@ fn grid_test() -> Result<()> {
     const SECTOR_SIZE: f32 = 1280.0;
     let path =
         PathBuf::from(r"C:\Users\Earthnuker\AppData\Local\astronav\data\stars");
-    let (mapped_nodes,_) = data_loader::map(&path)?;
+    let (mapped_nodes, _) = data_loader::map(&path)?;
     let mut grid: BTreeMap<[i16; 3], BufWriter<File>> = BTreeMap::default();
     let mut base_dir = PathBuf::new();
     base_dir.push("bins");
@@ -740,7 +741,6 @@ fn grid_test() -> Result<()> {
             let slice = std::slice::from_raw_parts(mm[3 * 4..].as_ptr(), total);
             (v, mm, slice)
         };
-        
     }
     let t_start = Instant::now();
     println!(
@@ -816,8 +816,9 @@ fn run() -> Result<()> {
             return gui_iced::main(router).map_err(Into::into);
         }
         Command::Test { ref key } if key.as_str() == "mmap" => {
-            // galaxy::make_tree(r"C:\Users\Earthnuker\AppData\Local\astronav\data\stars2")?;
-        },
+            // galaxy::make_tree(r"C:\Users\Earthnuker\AppData\Local\astronav\
+            // data\stars2")?;
+        }
         Command::Test { ref key } if key.as_str() == "optimize" => {
             let mut mode = ModeConfig::BeamSearch {
                 beam_width: BeamWidth::Infinite,
@@ -894,8 +895,13 @@ fn run() -> Result<()> {
                     *beam_width = *bw;
                 }
                 last_state.write().unwrap().take();
-                let route_res =
-                    router.compute_route(&hop_ids, Some(range), 0.0, mode, true);
+                let route_res = router.compute_route(
+                    &hop_ids,
+                    Some(range),
+                    0.0,
+                    mode,
+                    true,
+                );
                 let last_state = last_state.write().unwrap().take();
                 let (dt, route) = match route_res {
                     Ok((dt, route)) => (dt, route),
@@ -960,6 +966,7 @@ fn run() -> Result<()> {
             grid_test()?;
         }
         Command::Test { ref key } if key.as_str() == "beam_efficiency" => {
+            use rustc_hash::FxHashMap;
             let mut rng = thread_rng();
             router.set_path(
                 r#"C:\Users\Earthnuker\AppData\Local\astronav\data\stars.bin"#,
@@ -968,62 +975,132 @@ fn run() -> Result<()> {
             router.set_ship(get_ship("NMGR")?);
             let tree = router.get_tree();
             let tree = tree.as_ref();
-            let mode_inf = ModeConfig::BeamSearch {
-                beam_width: BeamWidth::Infinite,
-                refuel_mode: None,
-                refuel_primary: true,
-                boost_primary: true,
-                range_limit: 0.0,
-            };
-            let mode_beam = ModeConfig::BeamSearch {
-                beam_width: BeamWidth::Absolute(8192),
-                refuel_mode: None,
-                refuel_primary: true,
-                boost_primary: true,
-                range_limit: 0.0,
-            };
-            loop {
-                let sys = tree.choose_multiple(&mut rng, 2).collect_vec();
-                let id_0 = tree.id(sys[0]);
-                let id_1 = tree.id(sys[1]);
-                let route_dist = common::dist(&sys[0].pos(), &sys[1].pos());
-                let sys_0 = router.get(id_0)?.name;
-                let sys_1 = router.get(id_1)?.name;
-                let Ok((dt_beam,route_beam)) = router.compute_route(
-                    &[id_0, id_1],
-                    None,
-                    0.0,
-                    mode_beam,
-                    true,
-                ) else {
-                    continue;
-                };
-                let Ok((dt_inf,route_inf)) = router.compute_route(
-                    &[id_0, id_1],
-                    None,
-                    0.0,
-                    mode_inf,
-                    true,
-                ) else {
-                    continue;
-                };
-                let dist_beam = route_beam.iter().tuple_windows().map(|(a,b)| common::dist(&a.pos,&b.pos)).sum::<f32>();
-                let dist_inf = route_inf.iter().tuple_windows().map(|(a,b)| common::dist(&a.pos,&b.pos)).sum::<f32>();
-                let speedup = dt_inf.as_secs_f64() / dt_beam.as_secs_f64();
-                let route_diff = route_beam.len() - route_inf.len();
-                let route_diff_rel = route_diff as f32 / route_inf.len() as f32;
+            let mut acc_speedup = FxHashMap::default();
+            let mut acc_diff = FxHashMap::default();
+            let mut results: BTreeMap<BeamWidth, Vec<(usize, Duration, f32)>> =
+                BTreeMap::default();
+            'outer: loop {
+                let hops = tree.choose_multiple(&mut rng, 2).collect_vec();
+                let ids = hops.iter().map(|hop| tree.id(hop)).collect_vec();
+                let systems = ids.iter().map(|&id| router.get(id).expect("Failed to get system")).collect_vec();
+                let route_dist = systems
+                    .iter()
+                    .tuple_windows()
+                    .map(|(a, b)| common::dist(&a.pos, &b.pos))
+                    .sum::<f32>();
                 println!(
-                    "{sys_0} -> {sys_1}: {route_dist:.02} Ly, Beam: {dt_beam}, Inf: {dt_inf}, Speedup: {speedup:.02}, Diff: {route_diff} ({route_diff_rel:.02}%, {dist_diff:.02} Ly)",
-                    sys_0=sys_0,
-                    sys_1=sys_1,
-                    route_dist=route_dist,
-                    dt_beam=dt_beam.human_duration(),
-                    dt_inf=dt_inf.human_duration(),
-                    speedup=speedup,
-                    route_diff=route_diff,
-                    route_diff_rel=route_diff_rel*100.0,
-                    dist_diff = dist_beam-dist_inf,
+                    "{ids:?}: {route_dist:.02} Ly",
+                    route_dist = route_dist
                 );
+                let mut res = BTreeMap::new();
+                for bw in 0usize..=14 {
+                    let bw = match bw {
+                        0 => BeamWidth::Infinite,
+                        1..7 => {
+                            continue;
+                        }
+                        n => BeamWidth::Absolute(1 << (n - 1)),
+                    };
+                    let route = router.compute_route(
+                        &ids,
+                        None,
+                        0.0,
+                        ModeConfig::BeamSearch {
+                            beam_width: bw,
+                            refuel_mode: None,
+                            refuel_primary: true,
+                            boost_primary: true,
+                            range_limit: 0.0,
+                        },
+                        true,
+                    );
+                    let (dt,route) = match route {
+                        Ok((dt, route)) => (dt, route),
+                        Err(e) => {
+                            error!("{e}");
+                            continue 'outer;
+                        }
+                    };
+                    let dist = route
+                        .iter()
+                        .tuple_windows()
+                        .map(|(a, b)| common::dist(&a.pos, &b.pos))
+                        .sum::<f32>();
+                    res.insert(bw, (route.len(), dt, dist));
+                }
+                let Some((b_len, b_dt, _)) = res.get(&BeamWidth::Infinite)
+                else {
+                    continue;
+                };
+                for (bw, (jumps, dt, dist)) in &res {
+                    let speedup = b_dt.as_secs_f64() / dt.as_secs_f64();
+                    *acc_speedup.entry(*bw).or_insert(0.0) += speedup;
+                    let route_diff = *b_len as i64 - *jumps as i64;
+                    let route_diff_rel = route_diff as f64 / *b_len as f64;
+                    *acc_diff.entry(*bw).or_insert(0.0) += route_diff_rel;
+                    println!(
+                        "{bw}: {jumps} jumps, {dt}, {dist:.02} Ly",
+                        bw = bw,
+                        jumps = jumps,
+                        dt = dt.human_duration(),
+                        dist = dist
+                    );
+                    println!(
+                        "Speedup: {:.02}, Diff: {}",
+                        b_dt.as_secs_f64() / dt.as_secs_f64(),
+                        (*jumps as i64)-(*b_len as i64)
+                    );
+                    results.entry(*bw).or_default().push((*jumps, *dt, *dist));
+                }
+                let Some(baseline) = results.get(&BeamWidth::Infinite) else {
+                    continue;
+                };
+                for (bw, res) in &results {
+                    if res.len() != baseline.len() {
+                        warn!("Skipping {bw} due to length mismatch");
+                        continue;
+                    }
+                    let mean_speedup = baseline
+                        .iter()
+                        .zip(res)
+                        .map(|(b, r)| b.1.as_secs_f64() / r.1.as_secs_f64())
+                        .sum::<f64>()
+                        / res.len() as f64;
+                    let mean_diff = baseline
+                        .iter()
+                        .zip(res)
+                        .map(|(b, r)| {
+                            (r.0 as i64 - b.0 as i64) as f64
+                        })
+                        .sum::<f64>()
+                        / res.len() as f64;
+                    println!("{bw}: {mean_speedup:.02}, {mean_diff:.02}");
+                }
+                // let speedup = dt_inf.as_secs_f64() / dt_beam.as_secs_f64();
+                // let route_diff = route_beam.len() as i64 - route_inf.len() as
+                // i64; let route_diff_rel = route_diff as f64 /
+                // route_inf.len() as f64; acc_speedup +=
+                // speedup; acc_diff += route_diff_rel;
+                // loops += 1.0;
+                // println!(
+                //     "{sys_0} -> {sys_1}: {route_dist:.02} Ly, Beam: {dt_beam}
+                // ({dist_beam:.02}), Inf: {dt_inf} ({dist_inf:02}), Speedup:
+                // {speedup:.02}, Diff: {route_diff} ({route_diff_rel:.02}%,
+                // {dist_diff:.02} Ly)",     sys_0=sys_0,
+                //     sys_1=sys_1,
+                //     route_dist=route_dist,
+                //     dist_beam=dist_beam.human_count("Ly"),
+                //     dist_inf=dist_inf.human_count("Ly"),
+                //     dt_beam=dt_beam.human_duration(),
+                //     dt_inf=dt_inf.human_duration(),
+                //     speedup=speedup,
+                //     route_diff=route_diff,
+                //     route_diff_rel=route_diff_rel*100.0,
+                //     dist_diff = dist_beam-dist_inf,
+                // );
+                // println!(
+                //     "Speedup: {:.02}, Diff: {:.02} %", acc_speedup/loops,
+                // (acc_diff*100.0)/loops );
             }
         }
         Command::Test { ref key } if key.as_str() == "rayon" => {
@@ -1042,7 +1119,10 @@ fn run() -> Result<()> {
                         let tx = tx.clone();
                         let mut n = 0;
                         tree.look_up(
-                            &WithinDistance::new(*node.pos(), node.mult() * 50.0),
+                            &WithinDistance::new(
+                                *node.pos(),
+                                node.mult() * 50.0,
+                            ),
                             |nb| {
                                 n += 1;
                                 ControlFlow::Continue(())
