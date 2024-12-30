@@ -42,7 +42,7 @@ These computations were run utilizing 8 threads on a Ryzen 9 5950X clocked at 4 
 The heuristic used to select nodes in the graph to expand next uses the following formula to rank nodes:
 
 $$
-\text{dist}(node, goal) - \text{mult}(node) \cdot range
+\text{max}(\text{dist}(node, goal) - \text{mult}(node)  \cdot range, 0)
 $$
 
 Where $\text{dist}(node, goal)$ is the distance between the node and the goal system in light-years, $\text{mult}(node)$ is a multiplier that depends on the star type of the node (1 for normal stars, 1.5 for white dwarf stars and 4 for neutron stars) and $range$ is the jump range of the ship.
