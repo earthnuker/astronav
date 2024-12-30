@@ -37,11 +37,7 @@ struct SearchEntry {
 pub(crate) struct SearchResult {
     pub key: Vec<u8>,
     pub best_index: Option<u32>,
-    hash: u64,
-    pub best_dist_eudex: u32,
     pub best_dist_levenstein: u32,
-    pub n_eudex: u64,
-    pub n_lev: u64,
 }
 
 impl std::fmt::Debug for SearchResult {
@@ -49,11 +45,7 @@ impl std::fmt::Debug for SearchResult {
         f.debug_struct("SearchResult")
             .field("key", &std::str::from_utf8(&self.key).unwrap_or_default())
             .field("best_index", &self.best_index)
-            .field("hash", &format!("{:08X}", &self.hash))
-            .field("best_dist_eudex", &self.best_dist_eudex)
             .field("best_dist_levenstein", &self.best_dist_levenstein)
-            .field("n_eudex", &self.n_eudex)
-            .field("n_lev", &self.n_lev)
             .finish()
     }
 }
@@ -63,80 +55,36 @@ impl Default for SearchResult {
         Self {
             key: vec![],
             best_index: None,
-            hash: u64::MAX,
-            best_dist_eudex: u32::MAX,
             best_dist_levenstein: u32::MAX,
-            n_eudex: 0,
-            n_lev: 0,
         }
     }
 }
 
 impl SearchResult {
     pub(crate) fn new(s: &[u8]) -> Self {
-        Self { key: s.to_owned(), hash: eudex_hash(s), ..Default::default() }
+        Self { key: s.to_owned(), ..Default::default() }
     }
 
     pub(crate) fn update(&mut self, idx: u32, name: &[u8]) {
         if self.best_dist_levenstein == 0 {
             return;
         }
-        self.n_eudex += 1;
-        let eudex_dist = eudex_dist(self.hash, eudex_hash(name));
-        if eudex_dist <= self.best_dist_eudex {
-            self.best_dist_eudex = eudex_dist;
-            let dist_levenstein =
-                triple_accel::levenshtein_exp(&self.key, name);
-            self.n_lev += 1;
-            if dist_levenstein < self.best_dist_levenstein {
-                self.best_dist_levenstein = dist_levenstein;
-                self.best_index = Some(idx);
-            }
+        let dist_levenstein =
+            triple_accel::levenshtein_exp(&self.key, name);
+        if dist_levenstein < self.best_dist_levenstein {
+            self.best_dist_levenstein = dist_levenstein;
+            self.best_index = Some(idx);
         }
     }
 
     pub(crate) fn merge(&mut self, other: &Self) {
-        self.n_eudex += other.n_eudex;
-        self.n_lev += other.n_lev;
-        if other.best_dist_eudex <= self.best_dist_eudex
-            && other.best_dist_levenstein < self.best_dist_levenstein
+        if other.best_dist_levenstein < self.best_dist_levenstein
         {
             self.key = other.key.clone();
-            self.best_dist_eudex = other.best_dist_eudex;
             self.best_dist_levenstein = other.best_dist_levenstein;
             self.best_index = other.best_index;
         }
     }
-}
-
-const fn eudex_dist(a: u64, b: u64) -> u32 {
-    (a ^ b).count_ones()
-}
-
-fn eudex_hash(string: &[u8]) -> u64 {
-    // from https://docs.rs/eudex/latest/src/eudex/lib.rs.html#35
-    let mut b = 0;
-    let first_byte =
-        eudex::raw::map_first(*string.first().unwrap_or(&0)) as u64;
-
-    let mut res = 0;
-    let mut n = 1u8;
-
-    loop {
-        b += 1;
-        // Detect overflows into the first slot.
-        if n == 0 || b >= string.len() {
-            break;
-        }
-
-        if let Some(x) = eudex::raw::filter(res as u8, string[b]) {
-            res <<= 8;
-            res |= x as u64;
-            n <<= 1;
-        }
-    }
-
-    res | (first_byte << 56)
 }
 
 pub(crate) struct MappedNodes {
