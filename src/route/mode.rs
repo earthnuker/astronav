@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumDiscriminants, EnumIter, EnumVariantNames};
+use strum::{Display, EnumDiscriminants, EnumIter, EnumVariantNames, VariantNames};
 
 use crate::common::{BeamWidth, TreeNode, F32};
 
@@ -36,7 +36,7 @@ pub enum RefuelMode {
 
 #[derive(Debug, Deserialize, Serialize, Copy, Clone, EnumDiscriminants)]
 #[strum_discriminants(name(RouteMode))]
-#[strum_discriminants(derive(EnumIter, EnumVariantNames, Display))]
+#[strum_discriminants(derive(EnumIter, VariantNames, Display))]
 #[strum_discriminants(strum(serialize_all = "title_case"))]
 #[serde(rename_all = "snake_case", tag = "mode", deny_unknown_fields)]
 pub enum ModeConfig {
@@ -122,18 +122,25 @@ impl std::fmt::Display for ModeConfig {
                 boost_primary,
                 range_limit,
             } => {
-                match refuel_mode {
-                    Some(refuel_mode) => write!(
-                        f,
-                        "Beam search, beam width: {beam_width}, {refuel_mode}"
-                    )?,
-                    None => write!(
-                        f,
-                        "Bread-first search, beam width: {beam_width}"
-                    )?,
-                };
-                if *refuel_primary {
-                    write!(f, ", only scooping at primary stars")?;
+                    match beam_width {
+                        BeamWidth::Absolute(beam_width) => {
+                            write!(f, "Beam search, beam width: {beam_width}")?
+                        }
+                        BeamWidth::Fraction(num,den) => {
+                            write!(
+                                f,
+                                "Beam search, beam width: {num}/{den}"
+                            )?
+                        }
+                        BeamWidth::Infinite => {
+                            write!(f, "Breadth-first search")?
+                        }
+                    }
+                if let Some(refuel_mode) = refuel_mode {
+                    write!(f, ", {refuel_mode}")?;
+                    if *refuel_primary {
+                        write!(f, ", only scooping at primary stars")?;
+                    }
                 }
                 if *boost_primary {
                     write!(f, ", only supercharging at primary stars")?;
