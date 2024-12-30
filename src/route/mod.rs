@@ -790,104 +790,99 @@ impl Router {
         if waypoints.len() < 2 {
             return Ok(waypoints.to_vec());
         }
-        for pair in waypoints.windows(2) {
+        let total_legs = waypoints.len() - 1;
+        for (mut current_leg,(src,dst)) in waypoints.iter().tuple_windows().enumerate() {
+            current_leg+=1;
             if self.is_interrupted() {
                 break;
             }
-            match pair {
-                [src, dst] => {
-                    let d_total = dist(&src.pos, &dst.pos);
-                    info!(
-                        "Plotting route from [{}] to [{}]...",
-                        src.name, dst.name
-                    );
-                    debug!("Mode: {:?}", mode);
-                    info!("Mode: {}", mode);
-                    if let Some(ship) = self.ship.as_ref() {
-                        info!("Using Ship: {ship}");
-                    }
-                    info!(
-                        "Jump range: {} Ly, distance: {} Ly, estimated jumps: {}",
-                        range.format_float(),
-                        d_total.format_float(),
-                        (d_total / range).format_float()
-                    );
-                    let t_leg = Instant::now();
-                    let block = match &mode {
-                        ModeConfig::IncrementalBeamSearch { beam_width } => {
-                            self.route_ibs(src, dst, range, *beam_width)
-                        }
-                        ModeConfig::AStar { weight } => {
-                            self.route_astar(src, dst, range, **weight)
-                        }
-                        ModeConfig::DepthFirst => {
-                            self.route_dfs(src, dst, range)
-                        }
-                        ModeConfig::BeamSearch {
-                            beam_width,
-                            refuel_mode,
-                            refuel_primary,
-                            boost_primary,
-                            range_limit,
-                        } => self.route_beam(
-                            src,
-                            dst,
-                            range,
-                            beam_width,
-                            refuel_mode.as_ref(),
-                            *refuel_primary,
-                            *boost_primary,
-                            *range_limit,
-                        ),
-                        ModeConfig::BeamStack => {
-                            self.route_beam_stack(src, dst, range)
-                        }
-                        ModeConfig::IncrementalBroadening => {
-                            self.route_incremental_broadening(src, dst, range)
-                        }
-                        ModeConfig::Dijkstra => {
-                            self.route_dijkstra(src, dst, range)
-                        }
-                        ModeConfig::Ship { ship_mode } => {
-                            self.route_ship(src, dst, ship_mode)
-                        }
-                    }
-                    .map_err(|err| {
-                        AstronavError::RouteError {
-                            from: src.clone(),
-                            to: dst.clone(),
-                            reason: Box::new(AstronavError::Other(err)),
-                        }
-                    })?;
-                    let block_distance: f32 = block
-                        .par_windows(2)
-                        .map(|w| dist(&w[0].pos, &w[1].pos))
-                        .sum();
-                    info!(
-                        "Leg completed in {}: {} jumps, {} Ly",
-                        t_leg.elapsed().human_duration(),
-                        block.len(),
-                        block_distance.format_float()
-                    );
-                    if route.is_empty() {
-                        for sys in block.iter() {
-                            route.push(sys.clone());
-                        }
-                    } else {
-                        for sys in block.iter().skip(1) {
-                            route.push(sys.clone());
-                        }
-                    }
+            let d_total = dist(&src.pos, &dst.pos);
+            info!(
+                "Plotting route from [{}] to [{}] (Leg {current_leg}/{total_legs})...",
+                src.name, dst.name
+            );
+            debug!("Mode: {:?}", mode);
+            info!("Mode: {}", mode);
+            if let Some(ship) = self.ship.as_ref() {
+                info!("Using Ship: {ship}");
+            }
+            info!(
+                "Jump range: {} Ly, distance: {} Ly, estimated jumps: {}",
+                range.format_float(),
+                d_total.format_float(),
+                (d_total / range).format_float()
+            );
+            let t_leg = Instant::now();
+            let leg = match &mode {
+                ModeConfig::IncrementalBeamSearch { beam_width } => {
+                    self.route_ibs(src, dst, range, *beam_width)
                 }
-                _ => unreachable!(),
+                ModeConfig::AStar { weight } => {
+                    self.route_astar(src, dst, range, **weight)
+                }
+                ModeConfig::DepthFirst => {
+                    self.route_dfs(src, dst, range)
+                }
+                ModeConfig::BeamSearch {
+                    beam_width,
+                    refuel_mode,
+                    refuel_primary,
+                    boost_primary,
+                    range_limit,
+                } => self.route_beam(
+                    src,
+                    dst,
+                    range,
+                    beam_width,
+                    refuel_mode.as_ref(),
+                    *refuel_primary,
+                    *boost_primary,
+                    *range_limit,
+                ),
+                ModeConfig::BeamStack => {
+                    self.route_beam_stack(src, dst, range)
+                }
+                ModeConfig::IncrementalBroadening => {
+                    self.route_incremental_broadening(src, dst, range)
+                }
+                ModeConfig::Dijkstra => {
+                    self.route_dijkstra(src, dst, range)
+                }
+                ModeConfig::Ship { ship_mode } => {
+                    self.route_ship(src, dst, ship_mode)
+                }
+            }
+            .map_err(|err| {
+                AstronavError::RouteError {
+                    from: src.clone(),
+                    to: dst.clone(),
+                    reason: Box::new(AstronavError::Other(err)),
+                }
+            })?;
+            let leg_distance: f32 = leg
+                .windows(2)
+                .map(|w| dist(&w[0].pos, &w[1].pos))
+                .sum();
+            info!(
+                "Leg {current_leg}/{total_legs} completed in {}: {} jumps, {} Ly",
+                t_leg.elapsed().human_duration(),
+                leg.len(),
+                leg_distance.format_float()
+            );
+            if route.is_empty() {
+                for sys in leg.iter() {
+                    route.push(sys.clone());
+                }
+            } else {
+                for sys in leg.iter().skip(1) {
+                    route.push(sys.clone());
+                }
             }
         }
         let waypoints =
             waypoints.iter().map(|w| w.id).collect::<FxHashSet<u32>>();
         for node in route.iter_mut() {
-            if waypoints.contains(&node.id) {
-                node.flags.set_waypoint(true);
-            }
+            node.flags.set_waypoint(waypoints.contains(&node.id));
         }
         Ok(route)
     }
