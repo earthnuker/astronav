@@ -26,18 +26,17 @@ The following table shows average results from computing around 100 routes betwe
 These computations were run utilizing 8 threads on a Ryzen 9 5950X clocked at 4 GHz with 32 GB of RAM and KD-Tree memory-mapped in from an NVMe SSD (WD_BLACK SN770).
 
 
-| Beam Width     | Mean Speedup Factor | Mean Length difference from optimal route |
-| -------------- | ------------------- | ----------------------------------------- |
-| 64             | 353.02              | 33.59                                     |
-| 128            | 356.22              | 27.88                                     |
-| 256            | 302.66              | 24.99                                     |
-| 512            | 252.24              | 17.88                                     |
-| 1024           | 199.57              | 13.37                                     |
-| 2048           | 144.84              | 10.86                                     |
-| 4096           | 97.50               | 8.57                                      |
-| 8192           | 60.74               | 6.05                                      |
-| $\infty$ (BFS) | 1.00                | 0.00                                      |
-
+| Beam Width     | Mean Speedup  | Mean Length difference from optimal route (Jumps) |
+| -------------- | ------------- | ------------------------------------------------- |
+| 64             | 353x          | 33.59                                             |
+| 128            | 356x          | 27.88                                             |
+| 256            | 303x          | 24.99                                             |
+| 512            | 252x          | 17.88                                             |
+| 1024           | 200x          | 13.37                                             |
+| 2048           | 145x          | 10.86                                             |
+| 4096           | 98x           | 8.57                                              |
+| 8192           | 61x           | 6.05                                              |
+| $\infty$ (BFS) | 1x (baseline) | 0.00                                              |
 
 The heuristic used to select nodes in the graph to expand next uses the following formula to rank nodes:
 
