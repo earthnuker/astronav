@@ -803,6 +803,12 @@ impl Router {
             );
             debug!("Mode: {:?}", mode);
             info!("Mode: {}", mode);
+            match mode {
+                ModeConfig::BeamSearch { beam_width: BeamWidth::Absolute(n), ..} if n < 64 => {
+                    warn!("Beam-width is less than 64, route computation might fail!");
+                }
+                _ => {}
+            }
             if let Some(ship) = self.ship.as_ref() {
                 info!("Using Ship: {ship}");
             }
