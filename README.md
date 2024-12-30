@@ -1,5 +1,7 @@
 # Astronav
 
+![Astronav](images/screenshot.png)
+
 Long-range route-plotting tool for Elite Dangerous.
 
 ## Features
@@ -15,6 +17,25 @@ Long-range route-plotting tool for Elite Dangerous.
 - Pretty colors in output.
 - (very WIP) GUI for plotting routes.
 - Python API for building your own GUI or web interface and integrating Astronav into your own tools.
+
+## Running Astronav
+
+1. Install astronav using cargo:
+```bash
+cargo install --git https://github.com/earthnuker/astronav.git
+```
+
+3. Download the latest galaxy dump from Spansh  [here](https://downloads.spansh.co.uk/galaxy.json.gz), this is around 80GB compressed, so make sure you have enough disk space. (Eventually, I will provide a smaller, preprocessed version of the galaxy dump that only contains the data Astronav needs.)
+4. Preprocess the galaxy dump by running the following command:
+```bash
+astronav preprocess-galaxy X:\path\to\out\folder Y:\path\to\galaxy.json.gz
+```
+
+1. Run Astronav with the following command:
+
+```bash
+astronav route --stars-path X:\path\to\out\folder --ship NMGR --mmap beam --beam-width 8192 --refuel-mode least-jumps Sol Colonia
+```
 
 ## Performance
 
