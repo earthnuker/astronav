@@ -192,7 +192,7 @@ impl Ship {
 
     pub fn new_from_journal() -> AstronavResult<Vec<NamedShip>> {
         #[cfg(not(target_os = "windows"))]
-        return bail!("Only supported on windows (for now)!");
+        return Err(AstronavError::Other(crate::eyre::anyhow!("Only supported on windows (for now)!")));
         let mut ret = FxHashSet::default();
         let re = Regex::new(r"^Journal\.\d{12}\.\d{2}\.log$")
             .map_err(|e| format!("Failed to parse regex: {e}"))?;
